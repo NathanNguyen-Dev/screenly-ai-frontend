@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import withAuth from '@/components/withAuth';
 // import { useAuth } from '@/contexts/AuthContext'; // Removed unused import
 import { User } from 'firebase/auth';
 import CreateJobModal from '@/components/CreateJobModal';
 import AppLayout from '@/components/AppLayout'; // Import the new layout
 import Link from 'next/link'; // Import Link
+import { getJobsApi, createJobApi } from '@/lib/api'; // Import API functions
 
 // Placeholder Icons
 const PlusIcon = () => (
@@ -20,11 +21,15 @@ const ExternalLinkIcon = () => (
 interface Job {
   id: string;
   title: string;
-  location?: string;
+  description?: string | null;
+  location?: string | null;
+  location_type?: string | null;
+  seniority_level?: string | null;
+  created_by_user_id: string;
   created_at: string; // Or Date
   candidate_count: number;
   average_score?: number | null;
-  screening_link?: string;
+  screening_link?: string | null;
 }
 
 interface JobsPageProps {
@@ -33,31 +38,51 @@ interface JobsPageProps {
 
 const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [_jobs, _setJobs] = useState<Job[]>([]); // Renamed as setJobs is unused directly
+  const [jobs, setJobs] = useState<Job[]>([]); // Use updated Job interface
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+  const [apiError, setApiError] = useState<string | null>(null); // State for API errors
 
-  // TODO: Implement actual API call to fetch jobs here
+  // Function to fetch jobs, wrapped in useCallback
+  const fetchJobs = useCallback(async () => {
+    setLoadingJobs(true);
+    setApiError(null);
+    console.log("Fetching jobs...");
+    try {
+      const fetchedJobs = await getJobsApi();
+      console.log("Fetched jobs:", fetchedJobs);
+      setJobs(fetchedJobs);
+    } catch (error) {
+      console.error("Failed to fetch jobs:", error);
+      setApiError(error instanceof Error ? error.message : "Failed to load jobs.");
+      setJobs([]); // Clear jobs on error
+    } finally {
+      setLoadingJobs(false);
+    }
+  }, []); // Empty dependency array means this function instance is stable
+
+  // Fetch jobs on initial component mount
   useEffect(() => {
-    // API call logic will go here when ready
-    // Example: const fetchedJobs = await api.getJobs();
-    // _setJobs(fetchedJobs); // Use _setJobs here when ready
-    // For now, just set loading to false after a delay
-    const timer = setTimeout(() => {
-       _setJobs([]); // Explicitly set empty array using the setter
-       setLoadingJobs(false);
-    }, 500);
-    return () => clearTimeout(timer); // Cleanup timer
-    // Add _setJobs to dependency array if ESLint warns, though it should be stable
-  }, []); // Removed dependency _setJobs, as it's stable
+    fetchJobs();
+  }, [fetchJobs]); // Include fetchJobs in dependency array
 
-  const handleCreateJobSubmit = async (title: string, description: string) => {
-    console.log("Creating job with:", { title, description });
-    // TODO: Replace with actual API call to backend (e.g., await api.createJob(...))
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-    console.log("Job creation API call finished (simulated).");
-    // TODO: Refetch jobs list after successful creation 
-    // Example: fetchJobs(); 
+  const handleCreateJobSubmit = async (jobData: {
+      title: string;
+      description?: string | null;
+      location?: string | null;
+      location_type?: string | null;
+      seniority_level?: string | null;
+  }) => {
+    console.log("Submitting new job:", jobData);
+    setApiError(null);
+    try {
+      const newJob = await createJobApi(jobData);
+      console.log("Job created successfully:", newJob);
+      fetchJobs(); 
+    } catch (error) {
+      console.error("Failed to create job:", error);
+      throw error; 
+    }
   };
 
   const handleSelectJob = (jobId: string) => {
@@ -74,27 +99,41 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      setSelectedJobs(new Set(_jobs.map(job => job.id))); // Use _jobs here
+      setSelectedJobs(new Set(jobs.map(job => job.id)));
     } else {
       setSelectedJobs(new Set());
     }
   };
 
-  const isAllSelected = _jobs.length > 0 && selectedJobs.size === _jobs.length; // Use _jobs here
+  const isAllSelected = jobs.length > 0 && selectedJobs.size === jobs.length;
 
   const formatRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
-    const diffMinutes = Math.round(diffSeconds / 60);
-    const diffHours = Math.round(diffMinutes / 60);
-    const diffDays = Math.round(diffHours / 24);
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date'; // Handle cases where dateString is not parseable
+      }
+      const now = new Date();
+      const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
+      const diffMinutes = Math.round(diffSeconds / 60);
+      const diffHours = Math.round(diffMinutes / 60);
+      const diffDays = Math.round(diffHours / 24);
 
-    if (diffSeconds < 60) return `less than a minute ago`;
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      if (diffSeconds < 60) return `less than a minute ago`;
+      if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } catch (e) {
+      console.error("Error formatting date:", dateString, e);
+      return "Error formatting date";
+    }
   };
+
+  // Helper to format display values (like location type, seniority)
+  const formatDisplay = (value: string | null | undefined) => {
+      if (!value) return '-';
+      return value.charAt(0).toUpperCase() + value.slice(1).replace('-',' ');
+  }
 
   return (
     <AppLayout user={user}> { /* Use the AppLayout */}
@@ -119,6 +158,13 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
         </div>
       )}
 
+      {/* API Error Display */} 
+      {apiError && (
+          <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 border border-red-400 rounded" role="alert">
+              <span className="font-medium">Error:</span> {apiError}
+          </div>
+      )}
+
       {/* Jobs Table/List */} 
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="overflow-x-auto">
@@ -132,7 +178,7 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       aria-label="Select all jobs"
-                      disabled={_jobs.length === 0} // Use _jobs
+                      disabled={jobs.length === 0}
                     />
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -143,6 +189,12 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Location
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Level
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Screening Link
@@ -161,18 +213,18 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loadingJobs ? (
                  <tr>
-                   <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                   <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
                      Loading jobs...
                    </td>
                  </tr>
-              ) : _jobs.length === 0 ? (
+              ) : jobs.length === 0 && !apiError ? (
                 <tr>
-                   <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                   <td colSpan={10} className="px-6 py-4 text-center text-gray-500">
                      No jobs found. Add your first job!
                    </td>
                  </tr>
               ) : (
-                _jobs.map((job) => ( // Use _jobs
+                jobs.map((job) => (
                   <tr key={job.id} className={`${selectedJobs.has(job.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
                     <td className="px-4 py-4 text-center">
                        <input
@@ -193,6 +245,12 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {job.location || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                       {formatDisplay(job.location_type)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                       {formatDisplay(job.seniority_level)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                        {job.screening_link ? (
