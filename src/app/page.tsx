@@ -70,35 +70,18 @@ export default function LandingPage() {
                 {/* Add placeholder images or icons here later */}
             </div>
 
-            <p className="mt-6 text-lg text-gray-600">
-              Simple pricing, just $3 per completed call.
-            </p>
-
             {/* Optional: Listen to screen button */}
             <button className="mt-8 px-6 py-3 text-lg font-medium text-indigo-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                ▷ Listen to screen (Example)
             </button>
           </div>
 
-          {/* Integrations */}
-          <div className="mt-16">
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Integrations</p>
-            <div className="flex justify-center items-center space-x-6 md:space-x-10 text-gray-400">
-              {/* Replace with actual logos */}
-              <span>Lever</span>
-              <span>Taleo</span>
-              <span>bambooHR</span>
-              <span>greenhouse</span>
-              <span>Ashby</span>
-              <span>ICIMS</span>
-            </div>
-          </div>
         </section>
 
         {/* App Mockup Section */}
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
            <div className="max-w-5xl mx-auto">
-             {/* Placeholder for the large app screenshot/mockup */}
+             {/* Placeholder for the large app screenshot/mockup */} 
              <div className="aspect-video bg-indigo-100 rounded-lg shadow-xl flex items-center justify-center text-indigo-400">
                 App Mockup/Image Placeholder
              </div>
