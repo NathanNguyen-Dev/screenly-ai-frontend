@@ -39,16 +39,17 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
 
   // TODO: Implement actual API call to fetch jobs here
   useEffect(() => {
-    // --- Removed fetchJobs definition as it wasn't used --- 
     // API call logic will go here when ready
     // Example: const fetchedJobs = await api.getJobs();
-    // setJobs(fetchedJobs); 
+    // _setJobs(fetchedJobs); // Use _setJobs here when ready
     // For now, just set loading to false after a delay
     const timer = setTimeout(() => {
+       _setJobs([]); // Explicitly set empty array using the setter
        setLoadingJobs(false);
     }, 500);
     return () => clearTimeout(timer); // Cleanup timer
-  }, []);
+    // Add _setJobs to dependency array if ESLint warns, though it should be stable
+  }, []); // Removed dependency _setJobs, as it's stable
 
   const handleCreateJobSubmit = async (title: string, description: string) => {
     console.log("Creating job with:", { title, description });
