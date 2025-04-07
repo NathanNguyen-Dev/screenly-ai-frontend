@@ -40,11 +40,12 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
-      console.error("Login failed:", err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+    } catch (err) {
+      const error = err as { code?: string; message: string };
+      console.error("Login failed:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         setError('Invalid email or password.');
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (error.code === 'auth/invalid-email') {
         setError('Please enter a valid email address.');
       } else {
         setError('An unexpected error occurred. Please try again.');
@@ -63,8 +64,9 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       // Successful login is handled by onAuthStateChanged in AuthContext
       // Router push will happen via useEffect
-    } catch (err: any) {
-      console.error("Google Sign-In failed:", err);
+    } catch (err) {
+      const error = err as { code?: string; message: string };
+      console.error("Google Sign-In failed:", error);
       // Handle specific Google sign-in errors if needed
       setError('Failed to sign in with Google. Please try again.');
       setGoogleLoading(false); // Stop loading on error

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Import Image for placeholders/logos
+// import Image from 'next/image'; // Import Image for placeholders/logos - Removed as unused
 
 // Placeholder components for icons - replace with actual icons later
 const PlaceholderIcon = ({ className }: { className?: string }) => (

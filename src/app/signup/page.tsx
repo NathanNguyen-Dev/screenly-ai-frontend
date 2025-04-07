@@ -48,13 +48,14 @@ export default function SignUpPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       // TODO: Optionally call backend to create user profile in DB
-    } catch (err: any) {
-      console.error("Sign up failed:", err);
-      if (err.code === 'auth/email-already-in-use') {
+    } catch (err) {
+      const error = err as { code?: string; message: string }; // Assert type
+      console.error("Sign up failed:", error);
+      if (error.code === 'auth/email-already-in-use') {
         setError("This email address is already registered. Try logging in.");
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (error.code === 'auth/invalid-email') {
         setError("Please enter a valid email address.");
-      } else if (err.code === 'auth/weak-password') {
+      } else if (error.code === 'auth/weak-password') {
         setError("Password is too weak. Please choose a stronger password.");
       } else {
         setError("An unexpected error occurred during sign up. Please try again.");
@@ -71,8 +72,9 @@ export default function SignUpPage() {
     try {
       await signInWithPopup(auth, provider);
        // TODO: Optionally call backend to create user profile in DB if they don't exist
-    } catch (err: any) {
-      console.error("Google Sign-In failed:", err);
+    } catch (err) {
+      const error = err as { code?: string; message: string }; // Assert type
+      console.error("Google Sign-In failed:", error);
       setError('Failed to sign in with Google. Please try again.');
       setGoogleLoading(false); // Stop loading on error
     }
