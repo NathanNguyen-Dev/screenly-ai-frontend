@@ -1,8 +1,45 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Overview
+
+Frontend application for Screenly AI, providing the admin interface for managing jobs and candidates for AI-powered phone screenings.
+
+## Tech Stack
+
+- **Framework:** Next.js (App Router)
+- **UI:** Shadcn/UI
+- **Styling:** Tailwind CSS
+- **State Management:** React Context API (for Auth)
+- **Authentication:** Firebase Auth (Client SDK)
+- **Language:** TypeScript
+
 ## Getting Started
 
-First, run the development server:
+First, set up your environment variables. Create a `.env.local` file in the root directory and add the following based on your Firebase project configuration:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 # Or your backend API URL
+```
+
+Next, install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -10,8 +47,6 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
