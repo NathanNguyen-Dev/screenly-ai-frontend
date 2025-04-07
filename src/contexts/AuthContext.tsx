@@ -17,8 +17,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User is signed in
+        try {
+          const token = await user.getIdToken();
+          localStorage.setItem('idToken', token);
+          console.log("ID Token stored in localStorage.");
+          setUser(user);
+        } catch (error) {
+          console.error("Error getting ID token: ", error);
+          // Handle error: maybe clear local storage and log out user?
+          localStorage.removeItem('idToken');
+          setUser(null);
+          // Optionally call signOut(auth) here if token fetch fails critically
+        }
+      } else {
+        // User is signed out
+        localStorage.removeItem('idToken');
+        console.log("ID Token removed from localStorage.");
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -28,12 +47,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     setLoading(true);
+    // Remove token immediately on explicit logout
+    localStorage.removeItem('idToken'); 
+    console.log("ID Token removed from localStorage on logout.");
     try {
       await signOut(auth);
-      setUser(null); // Ensure user state is cleared immediately
+      setUser(null); // Listener above will also set user to null, but do it here for immediate UI update
     } catch (error) {
       console.error("Error signing out: ", error);
-      // Handle logout error appropriately
+      // Consider if token should be re-attempted to remove in catch block?
     } finally {
       setLoading(false);
     }

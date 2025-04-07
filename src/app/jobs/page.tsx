@@ -5,9 +5,11 @@ import withAuth from '@/components/withAuth';
 // import { useAuth } from '@/contexts/AuthContext'; // Removed unused import
 import { User } from 'firebase/auth';
 import CreateJobModal from '@/components/CreateJobModal';
+// import CreateCandidateModal from '@/components/CreateCandidateModal'; // Removed modal import
 import AppLayout from '@/components/AppLayout'; // Import the new layout
 import Link from 'next/link'; // Import Link
-import { getJobsApi, createJobApi } from '@/lib/api'; // Import API functions
+import { getJobsApi, createJobApi, Job } from '@/lib/api'; // Removed Candidate types/API
+import { Button } from "@/components/ui/button"; // Changed import to Shadcn Button
 
 // Placeholder Icons
 const PlusIcon = () => (
@@ -16,34 +18,33 @@ const PlusIcon = () => (
 const ExternalLinkIcon = () => (
   <svg className="w-4 h-4 ml-1 text-gray-400 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
 );
+const UserAddIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+  </svg>
+);
 
 // Define a type for the Job data
-interface Job {
-  id: string;
-  title: string;
-  description?: string | null;
-  location?: string | null;
-  location_type?: string | null;
-  seniority_level?: string | null;
-  created_by_user_id: string;
-  created_at: string; // Or Date
-  candidate_count: number;
-  average_score?: number | null;
-  screening_link?: string | null;
-}
+// interface Job { ... }
 
 interface JobsPageProps {
   user: User;
 }
 
 const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [jobs, setJobs] = useState<Job[]>([]); // Use updated Job interface
+  // State for Modals
+  const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
+  // Removed Candidate Modal state
+  // const [isCreateCandidateModalOpen, setIsCreateCandidateModalOpen] = useState(false);
+  // const [jobIdForCandidate, setJobIdForCandidate] = useState<string | null>(null);
+
+  // State for Data & UI
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
-  const [apiError, setApiError] = useState<string | null>(null); // State for API errors
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  // Function to fetch jobs, wrapped in useCallback
+  // Fetch Jobs Logic
   const fetchJobs = useCallback(async () => {
     setLoadingJobs(true);
     setApiError(null);
@@ -59,13 +60,14 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
     } finally {
       setLoadingJobs(false);
     }
-  }, []); // Empty dependency array means this function instance is stable
+  }, []);
 
   // Fetch jobs on initial component mount
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]); // Include fetchJobs in dependency array
 
+  // Submit Handler for Creating Jobs
   const handleCreateJobSubmit = async (jobData: {
       title: string;
       description?: string | null;
@@ -76,8 +78,7 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
     console.log("Submitting new job:", jobData);
     setApiError(null);
     try {
-      const newJob = await createJobApi(jobData);
-      console.log("Job created successfully:", newJob);
+      await createJobApi(jobData);
       fetchJobs(); 
     } catch (error) {
       console.error("Failed to create job:", error);
@@ -85,6 +86,10 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
     }
   };
 
+  // Removed Candidate Submit Handler
+  // const handleCreateCandidateSubmit = async (...) => { ... };
+
+  // Selection Handlers
   const handleSelectJob = (jobId: string) => {
     setSelectedJobs(prev => {
       const newSelection = new Set(prev);
@@ -119,42 +124,39 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
       const diffHours = Math.round(diffMinutes / 60);
       const diffDays = Math.round(diffHours / 24);
 
-      if (diffSeconds < 60) return `less than a minute ago`;
-      if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      if (diffSeconds < 60) return `just now`;
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      return `${diffDays}d ago`;
     } catch (e) {
       console.error("Error formatting date:", dateString, e);
-      return "Error formatting date";
+      return "Error";
     }
   };
 
   // Helper to format display values (like location type, seniority)
-  const formatDisplay = (value: string | null | undefined) => {
+  const formatDisplay = (value: string | null | undefined): string => {
       if (!value) return '-';
-      return value.charAt(0).toUpperCase() + value.slice(1).replace('-',' ');
+      return value.charAt(0).toUpperCase() + value.slice(1).replace(/[-_]/g, ' ');
   }
 
   return (
     <AppLayout user={user}> { /* Use the AppLayout */}
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">Job Listings</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
+        <Button onClick={() => setIsCreateJobModalOpen(true)}>
           <PlusIcon />
-          Add Job
-        </button>
+          <span className="ml-2">Add Job</span>
+        </Button>
       </div>
 
       {/* Action bar for selected items */} 
       {selectedJobs.size > 0 && (
         <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-md flex items-center space-x-3">
-           <button className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
-             Archive Selected
-           </button>
-           <span className="text-sm text-gray-600">{selectedJobs.size} job(s) selected</span>
+           <Button size="sm" variant="destructive">
+             Archive Selected ({selectedJobs.size})
+           </Button>
+           {/* Add other bulk actions here */}
         </div>
       )}
 
@@ -174,11 +176,11 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                 <th scope="col" className="px-4 py-3 w-12 text-center">
                    <input
                       type="checkbox"
-                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                      className="bg-white rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 focus:ring-offset-0 dark:bg-gray-700 dark:checked:bg-indigo-600"
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       aria-label="Select all jobs"
-                      disabled={jobs.length === 0}
+                      disabled={jobs.length === 0 || loadingJobs}
                     />
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -197,17 +199,17 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                   Level
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Screening Link
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Candidates
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Average Score
                 </th>
-                 <th scope="col" className="relative px-6 py-3">
-                    <span className="sr-only">Actions</span>
-                 </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Screening Link
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -229,7 +231,7 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                     <td className="px-4 py-4 text-center">
                        <input
                           type="checkbox"
-                          className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                          className="bg-white rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 focus:ring-offset-0 dark:bg-gray-700 dark:checked:bg-indigo-600"
                           checked={selectedJobs.has(job.id)}
                           onChange={() => handleSelectJob(job.id)}
                           aria-label={`Select job ${job.title}`}
@@ -252,24 +254,36 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                        {formatDisplay(job.seniority_level)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                       {job.screening_link ? (
-                         <a href={job.screening_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-indigo-600 hover:text-indigo-800 group">
-                           Screen
-                           <ExternalLinkIcon />
-                         </a>
-                       ) : '-'}
-                    </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                        {job.candidate_count}
                     </td>
                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                        {job.average_score?.toFixed(2) ?? '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                       <Link href={`/jobs/${job.id}`} className="text-indigo-600 hover:text-indigo-900">
-                           View
-                        </Link>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                       {job.screening_link ? (
+                         <Link href={job.screening_link} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-900 group inline-flex items-center">
+                           View Link <ExternalLinkIcon />
+                         </Link>
+                       ) : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-1">
+                      <Link
+                        href={`/jobs/${job.id}/add-candidate`}
+                        passHref
+                        legacyBehavior
+                      >
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            aria-label={`Add candidate to ${job.title}`}
+                            title="Add Candidate"
+                            className="h-8 w-8 p-0 text-foreground/70 hover:text-foreground"
+                        >
+                           <span className="sr-only">Add Candidate</span>
+                            <UserAddIcon />
+                        </Button>
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -279,12 +293,15 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Modal remains the same */}
+      {/* Modals */} 
       <CreateJobModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateJobModalOpen}
+        onClose={() => setIsCreateJobModalOpen(false)}
         onSubmit={handleCreateJobSubmit}
       />
+
+      {/* Removed CreateCandidateModal instance */}
+      {/* <CreateCandidateModal ... /> */}
     </AppLayout>
   );
 };
