@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import withAuth from '@/components/withAuth';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useAuth } from '@/contexts/AuthContext'; // Removed unused import
 import { User } from 'firebase/auth';
 import CreateJobModal from '@/components/CreateJobModal';
 import AppLayout from '@/components/AppLayout'; // Import the new layout
@@ -33,23 +33,21 @@ interface JobsPageProps {
 
 const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loadingJobs, setLoadingJobs] = useState(true); // Keep true initially
+  const [_jobs, _setJobs] = useState<Job[]>([]); // Renamed as setJobs is unused directly
+  const [loadingJobs, setLoadingJobs] = useState(true);
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
 
   // TODO: Implement actual API call to fetch jobs here
   useEffect(() => {
-    const fetchJobs = async () => {
-       setLoadingJobs(true);
-       // API call logic goes here
-       // Example: const fetchedJobs = await api.getJobs();
-       // setJobs(fetchedJobs);
-       // For now, just set loading to false after a delay to show the empty state
-       await new Promise(resolve => setTimeout(resolve, 500));
+    // --- Removed fetchJobs definition as it wasn't used --- 
+    // API call logic will go here when ready
+    // Example: const fetchedJobs = await api.getJobs();
+    // setJobs(fetchedJobs); 
+    // For now, just set loading to false after a delay
+    const timer = setTimeout(() => {
        setLoadingJobs(false);
-    };
-    // fetchJobs(); // Uncomment when API is ready
-    setLoadingJobs(false); // TEMPORARY: Remove loading state immediately for now
+    }, 500);
+    return () => clearTimeout(timer); // Cleanup timer
   }, []);
 
   const handleCreateJobSubmit = async (title: string, description: string) => {
@@ -57,8 +55,8 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
     // TODO: Replace with actual API call to backend (e.g., await api.createJob(...))
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
     console.log("Job creation API call finished (simulated).");
-    // TODO: Refetch jobs list after successful creation (e.g., fetchJobs() or similar)
-    // --- Removed local state update --- 
+    // TODO: Refetch jobs list after successful creation 
+    // Example: fetchJobs(); 
   };
 
   const handleSelectJob = (jobId: string) => {
@@ -75,13 +73,13 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      setSelectedJobs(new Set(jobs.map(job => job.id)));
+      setSelectedJobs(new Set(_jobs.map(job => job.id))); // Use _jobs here
     } else {
       setSelectedJobs(new Set());
     }
   };
 
-  const isAllSelected = jobs.length > 0 && selectedJobs.size === jobs.length;
+  const isAllSelected = _jobs.length > 0 && selectedJobs.size === _jobs.length; // Use _jobs here
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -133,7 +131,7 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                       aria-label="Select all jobs"
-                      disabled={jobs.length === 0} // Disable if no jobs
+                      disabled={_jobs.length === 0} // Use _jobs
                     />
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -166,14 +164,14 @@ const JobsPage: React.FC<JobsPageProps> = ({ user }) => {
                      Loading jobs...
                    </td>
                  </tr>
-              ) : jobs.length === 0 ? (
+              ) : _jobs.length === 0 ? (
                 <tr>
                    <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
                      No jobs found. Add your first job!
                    </td>
                  </tr>
               ) : (
-                jobs.map((job) => (
+                _jobs.map((job) => ( // Use _jobs
                   <tr key={job.id} className={`${selectedJobs.has(job.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
                     <td className="px-4 py-4 text-center">
                        <input

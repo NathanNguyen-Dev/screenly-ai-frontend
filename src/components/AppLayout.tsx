@@ -52,6 +52,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, user }) => {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
+            {/* Display user email if available */}
+            {user?.email && (
+                <span className="hidden sm:inline-block text-sm text-gray-600">{user.email}</span>
+            )}
             <button
                 onClick={handleLogout}
                 className="text-sm font-medium text-gray-500 hover:text-gray-900"
