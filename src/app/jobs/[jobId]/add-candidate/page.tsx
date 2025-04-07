@@ -54,7 +54,7 @@ export default function AddCandidatePage() {
         try {
             await createCandidateApi(jobId, candidateData);
             console.log('Candidate created successfully!');
-            router.push(`/jobs/${jobId}`);
+            router.push('/jobs');
         } catch (err: unknown) {
             console.error("Error submitting candidate:", err);
             const errorMessage = err instanceof Error ? err.message : 'Failed to create candidate. Please try again.';
