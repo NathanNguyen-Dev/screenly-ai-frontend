@@ -103,7 +103,7 @@ export const createJobApi = async (jobData: JobCreateData): Promise<Job> => {
 
 // Function to create a candidate for a specific job
 export const createCandidateApi = async (jobId: string, candidateData: CandidateCreateData): Promise<CandidateReadData> => {
-    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/candidates/${jobId}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/jobs/${jobId}/candidates/`, {
         method: 'POST',
         body: JSON.stringify(candidateData),
     });
