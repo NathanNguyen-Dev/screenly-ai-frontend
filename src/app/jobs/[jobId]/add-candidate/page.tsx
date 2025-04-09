@@ -34,12 +34,26 @@ export default function AddCandidatePage() {
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        const phoneNumberTrimmed = phoneNumber.trim();
+        // Regex to validate +61 followed by 9 or 10 digits (common Australian lengths)
+        const phoneRegex = /^\+61\d{9,10}$/;
+
         if (!jobId) {
             setError('Error: Job ID is missing from URL.');
             return;
         }
-        if (!fullName.trim() || !phoneNumber.trim()) {
-            setError('Full Name and Phone Number are required.');
+        if (!fullName.trim()) {
+            setError('Full Name is required.');
+            return;
+        }
+        if (!phoneNumberTrimmed) {
+            setError('Phone Number is required.');
+            return;
+        }
+        // Validate phone number format
+        if (!phoneRegex.test(phoneNumberTrimmed)) {
+            setError('Phone Number must be in the format +61XXXXXXXXX (e.g., +61412345678).');
             return;
         }
 
@@ -47,7 +61,7 @@ export default function AddCandidatePage() {
         setError(null);
         const candidateData: CandidateCreateData = {
             full_name: fullName.trim(),
-            phone_number: phoneNumber.trim(),
+            phone_number: phoneNumberTrimmed,
             email: email.trim() || null,
         };
 
@@ -105,12 +119,13 @@ export default function AddCandidatePage() {
                                 <Label htmlFor="phoneNumber">Phone Number</Label>
                                 <Input
                                     id="phoneNumber"
-                                    placeholder="Candidate phone number"
+                                    type="tel"
+                                    placeholder="+61XXXXXXXXX"
                                     value={phoneNumber}
                                     onChange={(e) => setPhoneNumber(e.target.value)}
                                     required
                                     disabled={isLoading}
-                                    aria-invalid={!!error && !phoneNumber.trim()}
+                                    aria-invalid={!!error && (!phoneNumber.trim() || !/^\+61\d{9,10}$/.test(phoneNumber.trim()))}
                                 />
                             </div>
                             <div className="grid w-full items-center gap-1.5">

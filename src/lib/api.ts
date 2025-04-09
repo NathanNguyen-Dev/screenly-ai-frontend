@@ -31,12 +31,34 @@ export interface CandidateCreateData {
     email?: string | null; // Optional email
 }
 
-// Type for reading candidate data (Matches backend CandidateRead)
+// Updated CandidateReadData to include status and score
 export interface CandidateReadData extends CandidateCreateData {
-    id: string; // Assuming UUID is string on frontend
+    id: string;
     job_id: string;
-    created_at: string; // Assuming datetime is string on frontend
+    created_at: string;
     updated_at?: string | null;
+    status: string; // Added status
+    score?: number | null; // Added score (use number for float)
+}
+
+export interface JobQuestion {
+    id: string; // UUID as string
+    job_id: string; // UUID as string
+    question_text: string;
+    created_at: string; // ISO date string
+    updated_at?: string | null; // ISO date string or null
+}
+
+export interface JobQuestionCreateData {
+    question_text: string;
+}
+
+export interface JobUpdateData {
+    title?: string | null;
+    description?: string | null;
+    location?: string | null;
+    location_type?: string | null; // Send enum value as string
+    seniority_level?: string | null; // Send enum value as string
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -85,6 +107,130 @@ export const createCandidateApi = async (jobId: string, candidateData: Candidate
         method: 'POST',
         body: JSON.stringify(candidateData),
     });
+    return await response.json();
+};
+
+// Function to fetch a single job by ID
+export const getJobDetailsApi = async (jobId: string, token: string): Promise<Job> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch job details' }));
+        console.error('Error fetching job details:', errorData);
+        throw new Error(errorData.detail || 'Failed to fetch job details');
+    }
+    return await response.json();
+};
+
+// Function to fetch candidates for a specific job
+export const getCandidatesForJobApi = async (jobId: string, token: string): Promise<CandidateReadData[]> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/candidates`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch candidates' }));
+        console.error('Error fetching candidates:', errorData);
+        throw new Error(errorData.detail || 'Failed to fetch candidates');
+    }
+    return await response.json();
+};
+
+export const getJobQuestionsApi = async (jobId: string, token: string): Promise<JobQuestion[]> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/questions`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to fetch job questions' }));
+        console.error('Error fetching job questions:', errorData);
+        throw new Error(errorData.detail || 'Failed to fetch job questions');
+    }
+    return await response.json();
+};
+
+export const createJobQuestionApi = async (jobId: string, questionData: JobQuestionCreateData, token: string): Promise<JobQuestion> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/questions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(questionData),
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to create job question' }));
+        console.error('Error creating job question:', errorData);
+        throw new Error(errorData.detail || 'Failed to create job question');
+    }
+    return await response.json();
+};
+
+export const deleteJobQuestionApi = async (jobId: string, questionId: string, token: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}/questions/${questionId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        // Handle 204 No Content success case gracefully
+        if (response.status === 204) {
+             console.log(`Question ${questionId} deleted successfully.`);
+             return;
+        }
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to delete job question' }));
+        console.error('Error deleting job question:', errorData);
+        throw new Error(errorData.detail || 'Failed to delete job question');
+    }
+     console.log(`Question ${questionId} deleted successfully (status ${response.status}).`);
+     // Even if status is 200 or other success codes, we might not have a body.
+     // For DELETE, often 204 No Content is expected on success.
+};
+
+// Function to update a job
+export const updateJobApi = async (jobId: string, jobData: JobUpdateData, token: string): Promise<Job> => {
+    // Filter out null/undefined values if backend expects only provided fields
+    const updatePayload: Partial<JobUpdateData> = {};
+    for (const key in jobData) {
+        if (jobData[key as keyof JobUpdateData] !== null && jobData[key as keyof JobUpdateData] !== undefined) {
+            updatePayload[key as keyof JobUpdateData] = jobData[key as keyof JobUpdateData];
+        }
+    }
+    // Ensure at least one field is being updated if backend requires it (currently does)
+    if (Object.keys(updatePayload).length === 0) {
+        // You might want to handle this differently, maybe return current job data or throw
+        console.warn("Update called with no changes.");
+        // Depending on how you want the flow, you might skip the API call
+        // For now, let's allow the backend to handle the "no data" case (which raises 400)
+        // throw new Error("No fields provided for update."); 
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatePayload),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Failed to update job' }));
+        console.error('Error updating job:', errorData);
+        throw new Error(errorData.detail || 'Failed to update job');
+    }
     return await response.json();
 };
 

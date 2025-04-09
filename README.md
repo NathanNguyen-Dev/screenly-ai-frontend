@@ -15,9 +15,10 @@ Frontend application for Screenly AI, providing the admin interface for managing
 
 ## Getting Started
 
-First, set up your environment variables. Create a `.env.local` file in the root directory and add the following based on your Firebase project configuration:
+First, set up your environment variables for **local development**. Create a `.env.local` file in the root directory (this file should **not** be committed to Git) and add the following based on your Firebase project configuration and local backend URL:
 
-```
+```dotenv
+# .env.local (for local development)
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -26,8 +27,16 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id
 
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 # Or your backend API URL
+# Point to your local backend server during development
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 ```
+
+**For Production Deployment (e.g., on Vercel):**
+
+You **must** configure these same environment variables within your Vercel project settings (**Settings -> Environment Variables**).
+
+*   Set all the `NEXT_PUBLIC_FIREBASE_*` variables according to your Firebase project.
+*   **Crucially, set `NEXT_PUBLIC_API_BASE_URL` to the deployed URL of your backend application** (e.g., `https://your-backend-url.vercel.app`).
 
 Next, install dependencies:
 

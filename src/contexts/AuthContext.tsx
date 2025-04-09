@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
+  getIdToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,6 +46,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribe();
   }, []);
 
+  // Function to get ID token
+  const getIdToken = async (): Promise<string | null> => {
+    if (user) {
+      try {
+        // Force refresh if necessary? Usually handled automatically
+        const token = await user.getIdToken(false); // Set to true to force refresh
+        // Store/update token in localStorage as well?
+        // localStorage.setItem('idToken', token);
+        return token;
+      } catch (error) {
+        console.error("Error getting ID token from user object:", error);
+        // Attempt logout or clear state if token fails repeatedly
+        // await logout(); // Consider this carefully
+        return null;
+      }
+    } else {
+      console.log("User not logged in, cannot get ID token.");
+      // Check local storage as a fallback? Unreliable.
+      // const storedToken = localStorage.getItem('idToken');
+      // if (storedToken) return storedToken; 
+      return null;
+    }
+  };
+
   const logout = async () => {
     setLoading(true);
     // Remove token immediately on explicit logout
@@ -65,6 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     loading,
     logout,
+    getIdToken,
   };
 
   return (
