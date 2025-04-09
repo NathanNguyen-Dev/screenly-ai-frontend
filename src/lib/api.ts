@@ -234,4 +234,28 @@ export const updateJobApi = async (jobId: string, jobData: JobUpdateData, token:
     return await response.json();
 };
 
+// Add makeCallApi function
+export const makeCallApi = async (candidateId: string): Promise<{ status: string; message: string }> => { // Assuming a simple status/message response
+    const baseUrl = process.env.NEXT_PUBLIC_MAKE_CALL_API_URL;
+    if (!baseUrl) {
+        throw new Error('Make Call API base URL is not configured in environment variables.');
+    }
+
+    const url = `${baseUrl}/make-call`; // Append the endpoint path
+
+    console.log(`Initiating call for candidate ${candidateId} via URL: ${url}`);
+
+    const response = await fetchWithAuth(url, { // Using fetchWithAuth for authentication
+        method: 'POST',
+        body: JSON.stringify({ candidate_id: candidateId }), // Send candidate_id in the body
+    });
+
+    // Assuming the API returns JSON, even on success (modify if it returns text or empty)
+    const responseData = await response.json(); 
+    console.log(`Make call response for candidate ${candidateId}:`, responseData);
+    
+    // You might need to adjust the expected response structure based on your actual API
+    return responseData; 
+};
+
 // Add more API functions here as needed (getJobById, updateJob, deleteJob, etc.) 

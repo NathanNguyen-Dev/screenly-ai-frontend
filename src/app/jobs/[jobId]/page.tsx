@@ -12,6 +12,7 @@ import {
     createJobQuestionApi,
     deleteJobQuestionApi,
     updateJobApi,
+    makeCallApi,
     Job, 
     CandidateReadData, 
     JobQuestion,
@@ -99,6 +100,7 @@ export default function JobDetailPage() {
     const [submittingQuestion, setSubmittingQuestion] = useState(false);
     const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [callingCandidateId, setCallingCandidateId] = useState<string | null>(null);
 
     // State for Edit Modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -247,6 +249,39 @@ export default function JobDetailPage() {
             toast.error(`Error: ${message}`);
         } finally {
             setDeletingQuestionId(null);
+        }
+    };
+
+    // Handler to initiate a call for a candidate
+    const handleStartCall = async (candidateId: string) => {
+        if (!getIdToken) return;
+        setCallingCandidateId(candidateId); // Indicate which call is starting
+        setError(null); // Clear previous errors
+        toast.info(`Initiating call for candidate...`); // Immediate feedback
+
+        try {
+            // No need for token here if fetchWithAuth handles it, but makeCallApi needs fetchWithAuth
+            // const token = await getIdToken();
+            // if (!token) throw new Error("Authentication token not available.");
+
+            // Call the API
+            const result = await makeCallApi(candidateId); // fetchWithAuth is used inside makeCallApi
+
+            toast.success(result.message || `Call initiated successfully for candidate ${candidateId}.`);
+            // OPTIONAL: Refresh candidate list or update status locally after successful call initiation
+            // await fetchData(); // Could refetch all data
+            // Or update local state more surgically if the API confirms status change
+            setCandidates(prev => prev.map(c => 
+                c.id === candidateId ? { ...c, status: 'initiated' } : c // Example: optimistically set status
+            ));
+
+        } catch (err) {
+            console.error(`Failed to initiate call for candidate ${candidateId}:`, err);
+            const message = err instanceof Error ? err.message : "Failed to start call";
+            setError(`Error starting call: ${message}`);
+            toast.error(`Error starting call: ${message}`);
+        } finally {
+            setCallingCandidateId(null); // Reset loading state for this specific candidate
         }
     };
 
@@ -503,14 +538,20 @@ export default function JobDetailPage() {
                                                     </TableCell>
                                                     <TableCell className="text-right">{candidate.score?.toFixed(1) ?? '-'}</TableCell>
                                                     <TableCell className="text-right">
-                                                        {/* Add action buttons here: Start Call, View Results, etc. */} 
+                                                        {/* Add action buttons here: Start Call, View Results, etc. */}
                                                         {(candidate.status === 'pending' || candidate.status === 'failed') && (
-                                                            <Button size="sm" variant="outline">Start Call</Button>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline"
+                                                                onClick={() => handleStartCall(candidate.id)}
+                                                                disabled={callingCandidateId === candidate.id}
+                                                            >
+                                                                {callingCandidateId === candidate.id ? 'Calling...' : 'Start Call'}
+                                                            </Button>
                                                         )}
                                                         {candidate.status === 'completed' && (
                                                             <Button size="sm" variant="secondary">View Results</Button>
                                                         )}
-                                                        {/* Add other actions like Delete candidate later */}
                                                     </TableCell>
                                                 </TableRow>
                                             ))
