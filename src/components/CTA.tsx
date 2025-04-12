@@ -9,7 +9,7 @@ export default function CTA() {
                     Try Screenly AI for free
                 </h2>
                 <p className="text-gray-600 text-lg md:text-xl mt-4 mb-10">
-                    Make your first hire with AI today and don't look back.
+                    Make your first hire with AI today and don&apos;t look back.
                 </p>
                 <Link href="/signup"
                     className="inline-block px-6 py-3 text-lg font-bold text-white bg-indigo-600 rounded-md shadow-lg transform transition duration-300 hover:bg-indigo-700 hover:scale-105">
