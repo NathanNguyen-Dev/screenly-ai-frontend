@@ -42,7 +42,7 @@ export default function FAQ() {
     };
 
     return (
-        <section id="faq" className="py-24 md:py-16 px-4 sm:px-6 lg:px-8 bg-white">
+        <section id="faq" className="py-24 md:py-16 px-4 sm:px-6 lg:px-8 ">
             <div className="max-w-3xl mx-auto">
                 <div className="text-center mb-10">
                     <div className="flex items-center justify-center mb-3">
