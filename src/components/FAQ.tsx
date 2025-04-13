@@ -37,7 +37,7 @@ export default function FAQ() {
 
     const [openIndex, setOpenIndex] = useState(-1);
 
-    const handleToggle = (index) => {
+    const handleToggle = (index: React.SetStateAction<number>) => {
         setOpenIndex(openIndex === index ? -1 : index);
     };
 
