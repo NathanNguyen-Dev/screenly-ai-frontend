@@ -5,10 +5,21 @@ export default function Demo() {
         <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
             {/* Video Demo Section */}
             <div className="max-w-5xl mx-auto">
-                {/* Placeholder for the large app screenshot/mockup */}
-                <div className="aspect-video bg-indigo-100 rounded-lg shadow-xl flex items-center justify-center text-indigo-400">
-                    App Mockup/Image Placeholder
+
+
+                <div className="aspect-video w-full">
+                    <iframe
+                        className="w-full h-full"
+                        src="https://www.youtube.com/embed/4Ohz3xRD4GM?si=QRYYkWARZwKLd6j5"
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allowFullScreen
+                    ></iframe>
                 </div>
+
+
             </div>
         </section>
     );
