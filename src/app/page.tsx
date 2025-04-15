@@ -10,6 +10,7 @@ import HowItWorks from '@/components/HowItWorks';
 import FAQ from '@/components/FAQ';
 import CTA from '@/components/CTA';
 import Footer from '@/components/Footer';
+import { Analytics } from '@vercel/analytics/react';
 
 
 
@@ -32,6 +33,7 @@ export default function LandingPage() {
       {/* Main Content */}
       <main className="flex-grow">
 
+        <Analytics />
         <Header />
         <HeroSection />
         <Demo />
